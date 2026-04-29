@@ -208,12 +208,12 @@ const HomeScreen = ({ setTab }) =>
 
     {/* Banner */}
     <div style={{ padding: "12px 16px 0" }}>
-      <div style={{ background: "#FFF4EC", borderRadius: 20, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div onClick={() => setTab("basket")} style={{ background: "linear-gradient(135deg,#FF6A00,#FF9133)", borderRadius: 20, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#1C1610", marginBottom: 4 }}>Станьте миллионером</div>
-          <div style={{ fontSize: 12, color: "#8C7A6E", lineHeight: 1.4 }}>Откройте счёт и получите<br />шанс выиграть 1 000 000 ₽</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Новый раздел — Статистика 🍊</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Сколько тратишь на еду, куда уходят<br />деньги и что скоро закончится</div>
         </div>
-        <div style={{ width: 70, height: 60, background: "linear-gradient(135deg,#FFE4CC,#FF9133)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#CC5500", fontWeight: 600, textAlign: "center" }}>карта<br />апельсин</div>
+        <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>📊</div>
       </div>
     </div>
 
@@ -266,27 +266,6 @@ const HomeScreen = ({ setTab }) =>
       </div>
     </div>
 
-    {/* Basket teaser */}
-    <div style={{ padding: "10px 16px 0" }}>
-      <div onClick={() => setTab("basket")} style={{ background: "#fff", borderRadius: 20, padding: "16px 20px", cursor: "pointer", border: "1.5px solid #FFE4CC" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#1C1610" }}>Моя корзина</div>
-          <span style={{ fontSize: 12, color: "#FF6A00", fontWeight: 600 }}>Открыть →</span>
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <div style={{ flex: 1, background: "#FFF8F3", borderRadius: 12, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, color: "#8C7A6E", marginBottom: 3 }}>Осталось на еду</div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: "#FF6A00" }}>3 600 ₽</div>
-            <div style={{ fontSize: 10, color: "#B09E92" }}>на 11 дней</div>
-          </div>
-          <div style={{ flex: 1, background: "#FFF8F3", borderRadius: 12, padding: "10px 12px" }}>
-            <div style={{ fontSize: 11, color: "#8C7A6E", marginBottom: 3 }}>Кешбэк в мес.</div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: "#1C1610" }}>3 400 ✦</div>
-            <div style={{ fontSize: 10, color: "#B09E92" }}>= 340 ₽</div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     {/* What's new */}
     <div style={{ padding: "16px 0 24px" }}>
