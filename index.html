@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Апельсин — Корзина Integration</title>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body, #root {
+  height: 100%;
+  height: 100dvh;
+}
+body {
+  background: #FFFFFF;
+  font-family: 'Golos Text', -apple-system, sans-serif;
+  overflow: hidden;
+}
+.phone {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  background: #FFFFFF;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+/* Scrollbar hidden */
+.scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<script type="text/babel">
+
+
+
+const { useState } = React;
+
+// ─── DATA ───────────────────────────────────────────────────
+const data = {
+  balance: 22.18,
+  points: 0,
+  cashbackPct: 7,
+  spent: 8400,
+  daysLeft: 11,
+  cashbackPoints: 3400,
+  prevMonthSpent: 10800,
+  categories: [
+  { name: "Готовая еда", amount: 2100, prev: 900, color: "#FF6A00" },
+  { name: "Молочка", amount: 1800, prev: 2100, color: "#FF9133" },
+  { name: "Мясо и рыба", amount: 1400, prev: 1200, color: "#FFAD66" },
+  { name: "Снеки", amount: 980, prev: 800, color: "#FFC999" },
+  { name: "Крупы", amount: 620, prev: 700, color: "#FFE4CC" }],
+
+  weeklyAvg: [
+  { month: "Янв", avg: 2100 },
+  { month: "Фев", avg: 2340 },
+  { month: "Мар", avg: 1980 },
+  { month: "Апр", avg: 2560 },
+  { month: "Май", avg: 2200 },
+  { month: "Июн", avg: 2400 }],
+
+  soon: [
+  { name: "Молоко", daysAgo: 4, usualDays: 5 },
+  { name: "Творог", daysAgo: 8, usualDays: 7 },
+  { name: "Хлеб", daysAgo: 3, usualDays: 4 }],
+
+  lastPurchases: [
+  { name: "Пятёрочка на Тверской", time: "сегодня, 19:42", amount: 890, pts: 62 },
+  { name: "Перекрёсток Садовая", time: "вчера, 13:15", amount: 1240, pts: 87 },
+  { name: "Пятёрочка на Тверской", time: "3 дня назад", amount: 340, pts: 24 }],
+
+  favorites: [
+  { name: "Молоко Простоквашино", count: 23 },
+  { name: "Хлеб Бородинский", count: 18 },
+  { name: "Творог 5%", count: 14 }]
+
+};
+
+// ─── ICONS (SVG) ────────────────────────────────────────────
+const IconHome = ({ active }) =>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M3 12L12 3L21 12V21H15V15H9V21H3V12Z"
+  fill={active ? "#FF6A00" : "none"}
+  stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" strokeLinejoin="round" />
+  </svg>;
+
+const IconGift = ({ active }) =>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <rect x="3" y="9" width="18" height="13" rx="2" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" />
+    <path d="M12 9V22M3 13H21" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" />
+    <path d="M12 9C12 9 9 7 9 5C9 3.9 9.9 3 11 3C12.1 3 12 4 12 5" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" strokeLinecap="round" />
+    <path d="M12 9C12 9 15 7 15 5C15 3.9 14.1 3 13 3C11.9 3 12 4 12 5" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" strokeLinecap="round" />
+  </svg>;
+
+const IconCart = ({ active }) =>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" strokeLinejoin="round" />
+    <path d="M3 6h18M16 10a4 4 0 01-8 0" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" strokeLinecap="round" />
+  </svg>;
+
+const IconCard = ({ active }) =>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <rect x="2" y="5" width="20" height="14" rx="2" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" />
+    <path d="M2 10h20" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" />
+    <circle cx="6" cy="15" r="1" fill={active ? "#FF6A00" : "#B0B0B8"} />
+  </svg>;
+
+const IconProfile = ({ active }) =>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="8" r="4" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" />
+    <path d="M4 20C4 16.686 7.582 14 12 14C16.418 14 20 16.686 20 20" stroke={active ? "#FF6A00" : "#B0B0B8"} strokeWidth="1.8" strokeLinecap="round" />
+  </svg>;
+
+
+// ─── LOGO ───────────────────────────────────────────────────
+const Logo = () =>
+<div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#FF6A00" />
+      <path d="M16 8C11.6 8 8 11.6 8 16H24C24 11.6 20.4 8 16 8Z" fill="white" />
+      <path d="M16 8V5" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+    <span style={{ fontSize: 20, fontWeight: 700, color: "#FF6A00", letterSpacing: -0.5 }}>апельсин</span>
+  </div>;
+
+
+// ─── STATUS BAR ─────────────────────────────────────────────
+const StatusBar = () =>
+<div style={{ padding: "14px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <span style={{ fontSize: 15, fontWeight: 700, color: "#1C1610" }}>11:04</span>
+    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
+        <rect x="0" y="6" width="3" height="6" rx="1" fill="#1C1610" />
+        <rect x="4.5" y="4" width="3" height="8" rx="1" fill="#1C1610" />
+        <rect x="9" y="2" width="3" height="10" rx="1" fill="#1C1610" />
+        <rect x="13.5" y="0" width="3" height="12" rx="1" fill="#1C1610" />
+      </svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <path d="M8 2.5C10.5 2.5 12.7 3.6 14.2 5.3L15.5 4C13.6 1.9 11 0.5 8 0.5C5 0.5 2.4 1.9 0.5 4L1.8 5.3C3.3 3.6 5.5 2.5 8 2.5Z" fill="#1C1610" />
+        <path d="M8 5.5C9.7 5.5 11.2 6.2 12.3 7.4L13.6 6.1C12.1 4.6 10.2 3.5 8 3.5C5.8 3.5 3.9 4.6 2.4 6.1L3.7 7.4C4.8 6.2 6.3 5.5 8 5.5Z" fill="#1C1610" />
+        <circle cx="8" cy="10" r="1.5" fill="#1C1610" />
+      </svg>
+      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <div style={{ width: 22, height: 11, border: "1.5px solid #1C1610", borderRadius: 3, padding: 1, display: "flex" }}>
+          <div style={{ flex: "0 0 80%", background: "#1C1610", borderRadius: 1 }} />
+        </div>
+      </div>
+    </div>
+  </div>;
+
+
+// ─── BOTTOM NAV ─────────────────────────────────────────────
+const BottomNav = ({ tab, setTab }) => {
+  const tabs = [
+  { id: "home", label: "Главная", Icon: IconHome },
+  { id: "benefit", label: "Выгода", Icon: IconGift },
+  { id: "basket", label: "Статистика", Icon: IconCart },
+  { id: "card", label: "Карта", Icon: IconCard },
+  { id: "profile", label: "Профиль", Icon: IconProfile }];
+
+  return (
+    <div style={{
+      borderTop: "1px solid #F0EDE8",
+      background: "#fff",
+      display: "flex",
+      paddingBottom: 20,
+      paddingTop: 10,
+      flexShrink: 0
+    }}>
+      {tabs.map(({ id, label, Icon }) =>
+      <div key={id} onClick={() => setTab(id)}
+      style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer" }}>
+          <Icon active={tab === id} />
+          <span style={{ fontSize: 10, fontWeight: tab === id ? 600 : 400, color: tab === id ? "#FF6A00" : "#B0B0B8" }}>
+            {label}
+          </span>
+        </div>
+      )}
+    </div>);
+
+};
+
+// ─── HOME SCREEN ────────────────────────────────────────────
+const HomeScreen = ({ setTab }) =>
+<div className="scroll" style={{ flex: 1, background: "#F7F5F2" }}>
+    {/* Header */}
+    <div style={{ background: "#fff", padding: "10px 20px 16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Logo />
+        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#F5EDE4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="#B09E92" strokeWidth="1.5" />
+            <path d="M8 5V8.5M8 11V11.5" stroke="#B09E92" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    {/* Banner */}
+    <div style={{ padding: "12px 16px 0" }}>
+      <div style={{ background: "#FFF4EC", borderRadius: 20, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#1C1610", marginBottom: 4 }}>Станьте миллионером</div>
+          <div style={{ fontSize: 12, color: "#8C7A6E", lineHeight: 1.4 }}>Откройте счёт и получите<br />шанс выиграть 1 000 000 ₽</div>
+        </div>
+        <div style={{ width: 70, height: 60, background: "linear-gradient(135deg,#FFE4CC,#FF9133)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#CC5500", fontWeight: 600, textAlign: "center" }}>карта<br />апельсин</div>
+      </div>
+    </div>
+
+    {/* Balance */}
+    <div style={{ padding: "12px 16px 0" }}>
+      <div style={{ background: "#FF6A00", borderRadius: 20, padding: "20px 24px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -30, right: -20, width: 120, height: 120, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }} />
+        <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", marginBottom: 6 }}>Баланс</div>
+        <div style={{ fontSize: 40, fontWeight: 600, color: "#fff", letterSpacing: -0.5, marginBottom: 16 }}>22,18 ₽</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button style={{ flex: 1, padding: "10px", background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Пополнить</button>
+          <button style={{ flex: 1, padding: "10px", background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Перейти в карту</button>
+        </div>
+      </div>
+    </div>
+
+    {/* Points promo */}
+    <div style={{ padding: "10px 16px 0" }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: "#FF6A00", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect width="20" height="20" rx="5" fill="#FF6A00" /><path d="M5 10h10M10 5v10" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1610" }}>1 088 <span style={{ color: "#FF6A00" }}>✦</span> за выпуск карты</div>
+          <div style={{ fontSize: 11, color: "#8C7A6E" }}>и оплату покупки от 500 ₽</div>
+        </div>
+        <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M1 1L7 7L1 13" stroke="#D4C4B8" strokeWidth="2" strokeLinecap="round" /></svg>
+      </div>
+    </div>
+
+    {/* Points + Cashback */}
+    <div style={{ padding: "10px 16px 0", display: "flex", gap: 10 }}>
+      <div style={{ flex: 1, background: "#fff", borderRadius: 16, padding: "14px" }}>
+        <div style={{ fontSize: 11, color: "#8C7A6E", marginBottom: 8 }}>Баллы</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 24, fontWeight: 600, color: "#1C1610" }}>0</span>
+          <span style={{ fontSize: 16, color: "#FF6A00" }}>✦</span>
+        </div>
+        <div style={{ fontSize: 11, color: "#B09E92", marginTop: 2 }}>0 ₽</div>
+      </div>
+      <div style={{ flex: 1, background: "#fff", borderRadius: 16, padding: "14px" }}>
+        <div style={{ fontSize: 11, color: "#8C7A6E", marginBottom: 8 }}>Кешбэк</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#2E7D32" }}>5</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#FF6A00" }}>7%</span>
+          <span style={{ fontSize: 14 }}>🍀</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#FF6A00" }}>7%</span>
+        </div>
+        <div style={{ fontSize: 11, color: "#B09E92", marginTop: 2 }}>И ещё +4 магазина</div>
+      </div>
+    </div>
+
+    {/* Basket teaser */}
+    <div style={{ padding: "10px 16px 0" }}>
+      <div onClick={() => setTab("basket")} style={{ background: "#fff", borderRadius: 20, padding: "16px 20px", cursor: "pointer", border: "1.5px solid #FFE4CC" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#1C1610" }}>Моя корзина</div>
+          <span style={{ fontSize: 12, color: "#FF6A00", fontWeight: 600 }}>Открыть →</span>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ flex: 1, background: "#FFF8F3", borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ fontSize: 11, color: "#8C7A6E", marginBottom: 3 }}>Осталось на еду</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: "#FF6A00" }}>3 600 ₽</div>
+            <div style={{ fontSize: 10, color: "#B09E92" }}>на 11 дней</div>
+          </div>
+          <div style={{ flex: 1, background: "#FFF8F3", borderRadius: 12, padding: "10px 12px" }}>
+            <div style={{ fontSize: 11, color: "#8C7A6E", marginBottom: 3 }}>Кешбэк в мес.</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: "#1C1610" }}>3 400 ✦</div>
+            <div style={{ fontSize: 10, color: "#B09E92" }}>= 340 ₽</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* What's new */}
+    <div style={{ padding: "16px 0 24px" }}>
+      <div style={{ fontSize: 18, fontWeight: 700, color: "#1C1610", padding: "0 20px", marginBottom: 12 }}>Что нового</div>
+      <div style={{ display: "flex", gap: 10, padding: "0 20px", overflowX: "auto", scrollbarWidth: "none" }}>
+        {[
+      { title: "9% кешбэка с Билайном", bg: "#FFF4EC" },
+      { title: "Выиграйте 1 000 000 ₽", bg: "#FFF4EC" },
+      { title: "Платите Апельсином", bg: "#F0F8FF" },
+      { title: "Баллы за подписку", bg: "#F0FFF4" }].
+      map((item, i) =>
+      <div key={i} style={{ flexShrink: 0, width: 130, height: 100, background: item.bg, borderRadius: 16, padding: 12, display: "flex", alignItems: "flex-end" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#4A3F38", lineHeight: 1.3 }}>{item.title}</div>
+          </div>
+      )}
+      </div>
+    </div>
+  </div>;
+
+
+// ─── SHOPPING LIST ───────────────────────────────────────────
+const SUGGESTIONS = ["🥛 Молоко", "🧀 Творог", "🍞 Хлеб", "🥚 Яйца", "🍗 Курица", "🍅 Помидоры", "🧈 Масло"];
+const TIME_OPTIONS = ["Сегодня в 18:00", "Сегодня в 20:00", "Завтра в 10:00", "Завтра в 18:00", "Выбрать время"];
+
+const ShoppingList = () => {
+  const [items, setItems] = useState([
+  { text: "🥛 Молоко", done: false },
+  { text: "🍞 Хлеб", done: true },
+  { text: "🥚 Яйца", done: false }]
+  );
+  const [input, setInput] = useState("");
+  const [showReminder, setShowReminder] = useState(false);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [reminderSet, setReminderSet] = useState(false);
+
+  const add = (t) => {
+    const s = t.trim();
+    if (!s || items.find((i) => i.text === s)) return;
+    setItems((p) => [...p, { text: s, done: false }]);
+    setInput("");
+  };
+  const toggle = (i) => setItems((p) => p.map((x, j) => j === i ? { ...x, done: !x.done } : x));
+  const remove = (i) => setItems((p) => p.filter((_, j) => j !== i));
+  const clearDone = () => setItems((p) => p.filter((x) => !x.done));
+  const done = items.filter((x) => x.done).length;
+  const suggestions = SUGGESTIONS.filter((s) => !items.find((i) => i.text === s));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+      {/* Reminder block */}
+      {!reminderSet ?
+      <div>
+          <button onClick={() => setShowReminder((v) => !v)} style={{
+          width: "100%", padding: "13px 16px", background: showReminder ? "#FFF4EC" : "#FFF8F3",
+          border: `1.5px solid ${showReminder ? "#FFC999" : "#F0EDE8"}`, borderRadius: showReminder ? "16px 16px 0 0" : 16,
+          display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", fontFamily: "inherit"
+        }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18 }}>🔔</span>
+              <span style={{ color: "#FF6A00", fontSize: 14, fontWeight: 600 }}>Напомнить зайти в магазин</span>
+            </div>
+            <span style={{ color: "#FF9A00", fontSize: 13, fontWeight: 600 }}>{showReminder ? "↑" : "↓"}</span>
+          </button>
+          {showReminder &&
+        <div style={{ background: "#FFF8F3", border: "1.5px solid #FFC999", borderTop: "none", borderRadius: "0 0 16px 16px", padding: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+              {TIME_OPTIONS.map((t, i) =>
+          <button key={i} onClick={() => setSelectedTime(t)} style={{
+            padding: "11px 14px", background: selectedTime === t ? "#FFF4EC" : "#fff",
+            border: `1.5px solid ${selectedTime === t ? "#FF9A00" : "#E8DAD0"}`, borderRadius: 12,
+            color: selectedTime === t ? "#FF6A00" : "#6B5C52", fontSize: 13, fontWeight: selectedTime === t ? 600 : 400,
+            cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 8, fontFamily: "inherit"
+          }}>
+                  <span>{i === 4 ? "⏰" : "🕐"}</span>{t}
+                </button>
+          )}
+              <button onClick={() => setReminderSet(true)} disabled={!selectedTime} style={{
+            marginTop: 4, padding: 13, background: selectedTime ? "#FF6A00" : "#F0EDE8",
+            border: "none", borderRadius: 12, color: selectedTime ? "#fff" : "#B09E92",
+            fontSize: 14, fontWeight: 700, cursor: selectedTime ? "pointer" : "default", fontFamily: "inherit",
+            boxShadow: selectedTime ? "0 4px 12px rgba(255,106,0,0.25)" : "none"
+          }}>Поставить напоминание</button>
+            </div>
+        }
+        </div> :
+
+      <div style={{ background: "#F0FFF4", border: "1.5px solid #B7EFC5", borderRadius: 16, padding: "13px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 18 }}>✅</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#1D8A3A" }}>Напоминание установлено</div>
+              <div style={{ fontSize: 11, color: "#8C7A6E" }}>{selectedTime}</div>
+            </div>
+          </div>
+          <button onClick={() => {setReminderSet(false);setSelectedTime(null);}} style={{ background: "none", border: "none", color: "#B09E92", fontSize: 20, cursor: "pointer" }}>×</button>
+        </div>
+      }
+
+      {/* Input */}
+      <div style={{ background: "#fff", borderRadius: 16, padding: "4px 4px 4px 16px", border: "1.5px solid #E8DAD0", display: "flex", alignItems: "center", gap: 8 }}>
+        <input value={input} onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && add(input)}
+        placeholder="Добавить товар..."
+        style={{ flex: 1, border: "none", outline: "none", fontSize: 14, background: "transparent", color: "#1C1610", padding: "10px 0", fontFamily: "inherit" }} />
+        <button onClick={() => add(input)} disabled={!input.trim()}
+        style={{ width: 36, height: 36, border: "none", borderRadius: 12, background: input.trim() ? "#FF6A00" : "#F5EDE4", color: "#fff", fontSize: 20, fontWeight: 700, cursor: input.trim() ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+      </div>
+
+      {/* Suggestions */}
+      {suggestions.length > 0 &&
+      <div>
+          <div style={{ fontSize: 11, color: "#B09E92", marginBottom: 6 }}>Из ваших обычных покупок</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {suggestions.slice(0, 5).map((s, i) =>
+          <button key={i} onClick={() => add(s)} style={{ padding: "6px 12px", background: "#FFF4EC", border: "1px solid #FFC999", borderRadius: 20, color: "#FF6A00", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>+ {s}</button>
+          )}
+          </div>
+        </div>
+      }
+
+      {/* Progress */}
+      {done > 0 &&
+      <div style={{ background: "#F7F5F2", borderRadius: 14, padding: "10px 14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: "#8C7A6E" }}>Куплено {done} из {items.length}</span>
+            <button onClick={clearDone} style={{ background: "none", border: "none", color: "#FF6A00", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>Убрать купленные</button>
+          </div>
+          <div style={{ background: "#E8DAD0", borderRadius: 6, height: 4, overflow: "hidden" }}>
+            <div style={{ width: `${done / items.length * 100}%`, height: "100%", background: "#FF6A00", borderRadius: 6, transition: "width 0.3s" }} />
+          </div>
+        </div>
+      }
+
+      {/* List */}
+      <div style={{ background: "#fff", borderRadius: 20, overflow: "hidden", border: "1px solid #F0EDE8" }}>
+        {items.length === 0 ?
+        <div style={{ padding: 32, textAlign: "center" }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>🛒</div>
+            <div style={{ fontSize: 14, color: "#8C7A6E" }}>Список пуст</div>
+          </div> :
+        items.map((item, i) =>
+        <div key={i} style={{
+          display: "flex", alignItems: "center", gap: 12, padding: "13px 16px",
+          borderBottom: i < items.length - 1 ? "1px solid #F7F5F2" : "none",
+          background: item.done ? "#FAFDF9" : "#fff"
+        }}>
+            <button onClick={() => toggle(i)} style={{
+            width: 24, height: 24, borderRadius: 7, border: `2px solid ${item.done ? "#34C759" : "#D4C4B8"}`,
+            background: item.done ? "#34C759" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+          }}>{item.done && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}</button>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: item.done ? "#B09E92" : "#1C1610", textDecoration: item.done ? "line-through" : "none" }}>{item.text}</span>
+            <button onClick={() => remove(i)} style={{ background: "none", border: "none", color: "#D4C4B8", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: "0 2px" }}>×</button>
+          </div>
+        )}
+      </div>
+    </div>);
+
+};
+
+
+// ─── BASKET SCREEN ───────────────────────────────────────────
+const BasketScreen = () => {
+  const [subtab, setSubtab] = useState("stats");
+  const spent = data.spent;
+  const daysInMonth = 30;
+  const daysPassed = daysInMonth - data.daysLeft;
+  const avgDaily = Math.round(spent / daysPassed);
+  const projected = Math.round(avgDaily * daysInMonth);
+
+  const maxCat = Math.max(...data.categories.map((c) => c.amount));
+  const maxW = Math.max(...data.weeklyAvg.map((w) => w.avg));
+
+  const subtabs = [
+  { id: "stats", label: "Главное" },
+  { id: "insights", label: "Инсайты" },
+  { id: "list", label: "🛒 Список" }];
+
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+      {/* Header */}
+      <div style={{ background: "#fff", padding: "14px 20px 0", borderBottom: "1px solid #F0EDE8", flexShrink: 0 }}>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#1C1610", letterSpacing: -0.3 }}>Статистика</div>
+        </div>
+        {/* Subtabs */}
+        <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 12 }}>
+          {subtabs.map((t) =>
+          <button key={t.id} onClick={() => setSubtab(t.id)} style={{
+            padding: "7px 14px", borderRadius: 20, border: "none", cursor: "pointer", flexShrink: 0, fontFamily: "inherit",
+            fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+            background: subtab === t.id ? "#FF6A00" : "#F5EDE4",
+            color: subtab === t.id ? "#fff" : "#8C7A6E"
+          }}>{t.label}</button>
+          )}
+        </div>
+      </div>
+
+      <div className="scroll" style={{ flex: 1, background: "#F7F5F2", padding: "14px 16px 24px" }}>
+
+        {/* STATS */}
+        {subtab === "stats" &&
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Hero */}
+            <div style={{ background: "#FF6A00", borderRadius: 24, padding: "22px 24px", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -30, right: -20, width: 120, height: 120, background: "rgba(255,255,255,0.08)", borderRadius: "50%" }} />
+              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.8)", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Потрачено в апреле на еду</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+                <span style={{ fontSize: 44, fontWeight: 600, color: "#fff", letterSpacing: -0.5 }}>{spent.toLocaleString("ru")}</span>
+                <span style={{ fontSize: 20, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>₽</span>
+              </div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginBottom: 16 }}>
+                ~<b>{avgDaily} ₽/день</b> · прошло {daysPassed} из {daysInMonth} дней
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.25)", borderRadius: 8, height: 6, overflow: "hidden", marginBottom: 6 }}>
+                <div style={{ width: `${Math.round(daysPassed / daysInMonth * 100)}%`, height: "100%", background: "#fff", borderRadius: 8 }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 11 }}>осталось {data.daysLeft} дней</span>
+                <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 11 }}>прогноз: ~{projected.toLocaleString("ru")} ₽</span>
+              </div>
+            </div>
+
+            {/* Cashback + vs prev */}
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1, background: "#fff", borderRadius: 18, padding: "14px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#FF6A00", letterSpacing: 0.6, textTransform: "uppercase", marginBottom: 6 }}>Кешбэк</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 22, fontWeight: 600, color: "#1C1610" }}>{data.cashbackPoints.toLocaleString("ru")}</span>
+                  <span style={{ fontSize: 14, color: "#FF6A00" }}>✦</span>
+                </div>
+                <div style={{ fontSize: 11, color: "#B09E92", marginTop: 2 }}>= 340 ₽</div>
+              </div>
+              <div style={{ flex: 1, background: "#fff", borderRadius: 18, padding: "14px" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#8C7A6E", letterSpacing: 0.6, textTransform: "uppercase", marginBottom: 6 }}>Vs прошлый мес.</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ color: "#34C759", fontSize: 16 }}>↓</span>
+                  <span style={{ fontSize: 22, fontWeight: 600, color: "#1C1610" }}>{(data.prevMonthSpent - spent).toLocaleString("ru")}</span>
+                  <span style={{ fontSize: 13, color: "#8C7A6E" }}>₽</span>
+                </div>
+                <div style={{ fontSize: 11, color: "#B09E92", marginTop: 2 }}>было {data.prevMonthSpent.toLocaleString("ru")} ₽</div>
+              </div>
+            </div>
+
+            {/* Soon running out */}
+            <div style={{ background: "#fff", borderRadius: 20, padding: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1610" }}>Скоро может закончиться</div>
+              </div>
+              {data.soon.map((item, i) => {
+              const ratio = Math.min(item.daysAgo / item.usualDays, 1);
+              const color = ratio >= 1 ? "#FF3B30" : ratio >= 0.8 ? "#FF9A00" : "#34C759";
+              return (
+                <div key={i} style={{ padding: "10px 0", borderBottom: i < data.soon.length - 1 ? "1px solid #F7F5F2" : "none" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1C1610" }}>{item.name}</span>
+                      <span style={{ fontSize: 11, color: "#B09E92" }}>{item.daysAgo} дн. назад</span>
+                    </div>
+                    <div style={{ background: "#F0EDE8", borderRadius: 4, height: 4, overflow: "hidden" }}>
+                      <div style={{ width: `${ratio * 100}%`, height: "100%", background: color, borderRadius: 4 }} />
+                    </div>
+                  </div>);
+            })}
+            </div>
+
+            {/* Bar chart */}
+            <div style={{ background: "#fff", borderRadius: 20, padding: "18px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#8C7A6E", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Средние траты / неделю</div>
+                  <div style={{ fontSize: 28, fontWeight: 600, color: "#1C1610", letterSpacing: -0.5 }}>2 400 ₽</div>
+                </div>
+                <div style={{ background: "#EDF7EE", borderRadius: 10, padding: "5px 10px" }}>
+                  <span style={{ color: "#34C759", fontSize: 12, fontWeight: 600 }}>↑ +7%</span>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 80 }}>
+                {data.weeklyAvg.map((d, i) => {
+                const isLast = i === data.weeklyAvg.length - 1;
+                const h = Math.round(d.avg / maxW * 60);
+                return (
+                  <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <div style={{ width: "100%", height: `${h}px`, background: isLast ? "#FF6A00" : "#FFE4CC", borderRadius: "6px 6px 4px 4px" }} />
+                      <span style={{ fontSize: 10, fontWeight: isLast ? 700 : 400, color: isLast ? "#FF6A00" : "#B09E92" }}>{d.month}</span>
+                    </div>);
+              })}
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div style={{ background: "#fff", borderRadius: 20, padding: "18px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1610", marginBottom: 14 }}>Траты по категориям</div>
+              {data.categories.map((cat, i) => {
+              const isUp = cat.amount > cat.prev;
+              return (
+                <div key={i} style={{ marginBottom: 14 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1C1610" }}>{cat.name}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ color: isUp ? "#FF3B30" : "#34C759", fontSize: 11, fontWeight: 600 }}>
+                          {isUp ? "↑" : "↓"} {Math.abs(cat.amount - cat.prev)} ₽
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#1C1610" }}>{cat.amount.toLocaleString("ru")} ₽</span>
+                      </div>
+                    </div>
+                    <div style={{ background: "#F0EDE8", borderRadius: 6, height: 5, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.round(cat.amount / maxCat * 100)}%`, height: "100%", background: cat.color, borderRadius: 6 }} />
+                    </div>
+                  </div>);
+            })}
+            </div>
+
+            {/* Price growth */}
+            <div style={{ background: "#FFFBEC", border: "1.5px solid #FFE58A", borderRadius: 20, padding: "16px" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#B8860B", marginBottom: 6 }}>Ваши цены растут</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#1C1610", marginBottom: 2 }}>Корзина подорожала на <span style={{ color: "#FF9A00" }}>340 ₽</span></div>
+              <div style={{ fontSize: 12, color: "#8C7A6E" }}>+8% за последние 2 месяца</div>
+            </div>
+          </div>
+        }
+
+        {/* INSIGHTS */}
+        {subtab === "insights" &&
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ background: "#fff", borderRadius: 20, padding: "18px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1610", marginBottom: 14 }}>Ваши фавориты в этом году</div>
+              {data.favorites.map((item, i) =>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < data.favorites.length - 1 ? "1px solid #F7F5F2" : "none" }}>
+                  <div style={{ width: 36, height: 36, background: "#FFF4EC", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 16 }}>{["🥛", "🍞", "🧀"][i]}</span>
+                  </div>
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "#1C1610" }}>{item.name}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: "#FF6A00" }}>{item.count}×</div>
+                    <div style={{ fontSize: 10, color: "#B09E92" }}>в этом году</div>
+                  </div>
+                </div>
+            )}
+            </div>
+
+            <div style={{ background: "#fff", borderRadius: 20, padding: "16px" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1610", marginBottom: 14 }}>Ваши привычки</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {[
+                  { emoji: "📍", label: "Любимый магазин", value: "Пятёрочка на Тверской", sub: "34 визита" },
+                  { emoji: "🕕", label: "Обычное время", value: "После 18:00", sub: "78% покупок" },
+                  { emoji: "🧾", label: "Средний чек", value: "620 ₽", sub: "в этом месяце" },
+                  { emoji: "🔁", label: "Частая покупка", value: "Молоко", sub: "каждые 5 дней" },
+                ].map((row, i) =>
+                  <div key={i} style={{
+                    background: "#F7F5F2", borderRadius: 16, padding: "14px 12px",
+                    display: "flex", flexDirection: "column", gap: 6,
+                  }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 10,
+                      background: "#FFF4EC", display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 18, marginBottom: 2,
+                    }}>{row.emoji}</div>
+                    <div style={{ fontSize: 11, color: "#B09E92", fontWeight: 500 }}>{row.label}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1C1610", lineHeight: 1.2 }}>{row.value}</div>
+                    <div style={{ fontSize: 11, color: "#FF6A00", fontWeight: 600 }}>{row.sub}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ background: "linear-gradient(135deg,#FF6A00,#FF9133)", borderRadius: 20, padding: "20px", textAlign: "center" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8 }}>За этот год потрачено на еду</div>
+              <div style={{ fontSize: 40, fontWeight: 600, color: "#fff", letterSpacing: -0.5, marginBottom: 4 }}>87 400 ₽</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", marginBottom: 6 }}>вернулось кешбэком</div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <span style={{ fontSize: 28, fontWeight: 600, color: "#fff" }}>9 614</span>
+                <span style={{ fontSize: 18 }}>✦</span>
+              </div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 4 }}>= 9 614 ₽</div>
+            </div>
+          </div>
+        }
+
+        {/* LIST */}
+        {subtab === "list" && <ShoppingList />}
+      </div>
+    </div>);
+
+};
+
+// ─── STUB SCREENS ─────────────────────────────────────────────
+const StubScreen = ({ title, emoji }) =>
+<div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#F7F5F2", gap: 12 }}>
+    <div style={{ fontSize: 48 }}>{emoji}</div>
+    <div style={{ fontSize: 18, fontWeight: 700, color: "#1C1610" }}>{title}</div>
+    <div style={{ fontSize: 13, color: "#B09E92" }}>
+</div>
+  </div>;
+
+// ─── APP ─────────────────────────────────────────────────────
+function App() {
+  const [tab, setTab] = useState("home");
+
+  return (
+    <div className="phone">
+      {tab === "home" && <HomeScreen setTab={setTab} />}
+      {tab === "benefit" && <StubScreen title="Выгода" emoji="🎁" />}
+      {tab === "basket" && <BasketScreen />}
+      {tab === "card" && <StubScreen title="Карта" emoji="💳" />}
+      {tab === "profile" && <StubScreen title="Профиль" emoji="👤" />}
+      <BottomNav tab={tab} setTab={setTab} />
+    </div>);
+
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+<div id="root"></div>
+</body>
+</html>
