@@ -82,7 +82,14 @@ const data = {
   favorites: [
   { name: "Молоко Простоквашино", count: 23 },
   { name: "Хлеб Бородинский", count: 18 },
-  { name: "Творог 5%", count: 14 }]
+  { name: "Творог 5%", count: 14 }],
+
+  deals: [
+  { emoji: "🥛", name: "Молоко Простоквашино 1л", oldPrice: 89, newPrice: 69, discount: 22, store: "Пятёрочка" },
+  { emoji: "🧀", name: "Творог Савушкин 5% 180г", oldPrice: 119, newPrice: 89, discount: 25, store: "Пятёрочка" },
+  { emoji: "🍗", name: "Филе куриное охл. 1кг", oldPrice: 289, newPrice: 219, discount: 24, store: "Перекрёсток" },
+  { emoji: "🥚", name: "Яйца С1 10шт", oldPrice: 99, newPrice: 79, discount: 20, store: "Пятёрочка" },
+  ]
 
 };
 
@@ -164,7 +171,7 @@ const BottomNav = ({ tab, setTab }) => {
   const tabs = [
   { id: "home", label: "Главная", Icon: IconHome },
   { id: "benefit", label: "Выгода", Icon: IconGift },
-  { id: "basket", label: "Статистика", Icon: IconCart },
+  { id: "basket", label: "Экономия", Icon: IconCart },
   { id: "card", label: "Карта", Icon: IconCard },
   { id: "profile", label: "Профиль", Icon: IconProfile }];
 
@@ -210,7 +217,7 @@ const HomeScreen = ({ setTab }) =>
     <div style={{ padding: "12px 16px 0" }}>
       <div onClick={() => setTab("basket")} style={{ background: "linear-gradient(135deg,#FF6A00,#FF9133)", borderRadius: 20, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Новый раздел — Статистика 🍊</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>Новый раздел — Экономия 🍊</div>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", lineHeight: 1.4 }}>Сколько тратишь на еду, куда уходят<br />деньги и что скоро закончится</div>
         </div>
         <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.2)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>📊</div>
@@ -266,6 +273,42 @@ const HomeScreen = ({ setTab }) =>
       </div>
     </div>
 
+
+    {/* Deals on your products */}
+    <div style={{ padding: "12px 16px 0" }}>
+      <div style={{ background: "#fff", borderRadius: 20, padding: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#1C1610" }}>Акции на твои продукты</div>
+            <div style={{ fontSize: 11, color: "#B09E92", marginTop: 2 }}>Товары которые ты обычно берёшь</div>
+          </div>
+          <div style={{ background: "#FFF4EC", borderRadius: 10, padding: "4px 10px" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "#FF6A00" }}>4 товара</span>
+          </div>
+        </div>
+        {data.deals.map((deal, i) =>
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < data.deals.length - 1 ? "1px solid #F7F5F2" : "none" }}>
+            <div style={{ width: 42, height: 42, background: "#FFF4EC", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{deal.emoji}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#1C1610", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{deal.name}</div>
+              <div style={{ fontSize: 11, color: "#B09E92", marginTop: 2 }}>{deal.store}</div>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12, color: "#B09E92", textDecoration: "line-through" }}>{deal.oldPrice} ₽</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#FF6A00" }}>{deal.newPrice} ₽</span>
+              </div>
+              <div style={{ background: "#FFF4EC", borderRadius: 6, padding: "2px 6px", marginTop: 3, display: "inline-block" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#FF6A00" }}>−{deal.discount}%</span>
+              </div>
+            </div>
+          </div>
+        )}
+        <div style={{ marginTop: 14, padding: "11px", background: "#FFF4EC", borderRadius: 12, textAlign: "center", cursor: "pointer" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#FF6A00" }}>Добавить всё в список →</span>
+        </div>
+      </div>
+    </div>
 
     {/* What's new */}
     <div style={{ padding: "16px 0 24px" }}>
@@ -449,7 +492,7 @@ const BasketScreen = () => {
       {/* Header */}
       <div style={{ background: "#fff", padding: "14px 20px 0", borderBottom: "1px solid #F0EDE8", flexShrink: 0 }}>
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#1C1610", letterSpacing: -0.3 }}>Статистика</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#1C1610", letterSpacing: -0.3 }}>Экономия</div>
         </div>
         {/* Subtabs */}
         <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingBottom: 12 }}>
@@ -508,27 +551,6 @@ const BasketScreen = () => {
                 </div>
                 <div style={{ fontSize: 11, color: "#B09E92", marginTop: 2 }}>было {data.prevMonthSpent.toLocaleString("ru")} ₽</div>
               </div>
-            </div>
-
-            {/* Soon running out */}
-            <div style={{ background: "#fff", borderRadius: 20, padding: "16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#1C1610" }}>Скоро может закончиться</div>
-              </div>
-              {data.soon.map((item, i) => {
-              const ratio = Math.min(item.daysAgo / item.usualDays, 1);
-              const color = ratio >= 1 ? "#FF3B30" : ratio >= 0.8 ? "#FF9A00" : "#34C759";
-              return (
-                <div key={i} style={{ padding: "10px 0", borderBottom: i < data.soon.length - 1 ? "1px solid #F7F5F2" : "none" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1C1610" }}>{item.name}</span>
-                      <span style={{ fontSize: 11, color: "#B09E92" }}>{item.daysAgo} дн. назад</span>
-                    </div>
-                    <div style={{ background: "#F0EDE8", borderRadius: 4, height: 4, overflow: "hidden" }}>
-                      <div style={{ width: `${ratio * 100}%`, height: "100%", background: color, borderRadius: 4 }} />
-                    </div>
-                  </div>);
-            })}
             </div>
 
             {/* Bar chart */}
